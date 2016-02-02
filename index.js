@@ -56,6 +56,9 @@ const defaultOptions = {
     },
     subModule: {
       name: 'index.js',
+    },
+    rootModule: {
+      name: 'index.js',
     }
   },
   templates: {
@@ -63,7 +66,8 @@ const defaultOptions = {
     command: path.join(__dirname, 'templates', 'es6-common', 'command.handlebars'),
     event: path.join(__dirname, 'templates', 'es6-common', 'event.handlebars'),
     fault: path.join(__dirname, 'templates', 'es6-common', 'fault.handlebars'),
-    subModule: path.join(__dirname, 'templates', 'es6-common', 'submodule.handlebars'),
+    subModule: path.join(__dirname, 'templates', 'es6-common', 'module.handlebars'),
+    rootModule: path.join(__dirname, 'templates', 'es6-common', 'module.handlebars'),
   }
 };
 
@@ -373,6 +377,7 @@ function generator(options) {
             if (!collections[typeName]) {
               collections[typeName] = [];
               collections[typeName].items = [];
+              collections[typeName].folder = namingOptions.folder;
             }
             collections[typeName].items.push({
               className: subDef.className,
@@ -415,6 +420,23 @@ function generator(options) {
           contents: new Buffer(rendered),
         }));
       }
+      // Generate root module
+      debug('Rendering root module');
+      const data = {};
+      data.items = [];
+      for (const key in flags) {
+        data.items.push({
+          className: key,
+          fileName: collections[key].folder,
+        });
+      }
+      const rendered = templateSet.rootModule(data);
+      this.push(new gutil.File({
+        path: path.join(configuration.naming.rootModule.name),
+        contents: new Buffer(rendered),
+      }));
+      
+      
     } catch (err) {
       debug('    Unhandled exception occured in plugin. Raising context error.');
       debug(err);

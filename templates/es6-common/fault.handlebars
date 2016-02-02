@@ -37,6 +37,32 @@ class {{className}} extends Fault {
     {{/each}}
   }
 
+  /**
+   * Parse the fault from an object definition.
+   * @param {Object} object               - Object to parse
+   * @returns {{{className}}}             - Parsed fault
+   */
+  static fromObject(object) {
+    return new {{className}}(object);
+  }
+
+  /**
+   * Perform eventsauce serialization.
+   * @remarks Chains to toJSON for the generated types.
+   * @returns {object}  - Plain JSON object
+   **/
+  toObject() {
+    return this.toJSON();
+  }
+
+  /**
+   * Fault Type name for this class
+   * @returns {string} - Literal {{aggregate.className}}.{{className}}
+   **/
+  get faultType() {
+    return '{{className}}';
+  }
+
 {{#each properties}}
 
   /**

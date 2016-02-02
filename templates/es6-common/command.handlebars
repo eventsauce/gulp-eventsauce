@@ -1,11 +1,97 @@
 'use strict';
 
+const eventsauce = require('eventsauce');
+const DomainCommand = eventsauce.DomainCommand;
+{{#each properties}}
+
 /**
- *
+  * Parse/validate value for {{@key}} property. (Private)
+  **/
+function _{{@key}}Validate(value) {
+{{#if required}}  if (value === null || value === undefined) {
+    throw new Error('Invalid value for property: {{@key}}');
+  }{{/if}}
+  return value;
+}
+{{/each}}
+
+/**
+ * {{#if description}}{{description}}{{else}}Definition for DomainCommand: {{className}}{{/if}}
  * @class {{className}}
  **/
-class {{className}} {
+class {{className}} extends DomainCommand {
 
+  /**
+   * Initialize a new instance of the {{className}} class
+   * @param {object} input      - Input object, or null.
+   **/
+  constructor(input) {
+    super(input);
+
+    // Don't perform any checking if the input is null.
+    if (!input) {
+      return;
+    }
+    {{#each properties}}
+    this._{{@key}} = _{{@key}}Validate(input.{{@key}});
+    {{/each}}
+  }
+
+  /**
+   * Parse the command from an object definition.
+   * @param {Object} object               - Object to parse
+   * @returns {{{className}}}             - Parsed command
+   */
+  static fromObject(object) {
+    return new {{className}}(object);
+  }
+
+  /**
+   * Perform eventsauce serialization.
+   * @remarks Chains to toJSON for the generated types.
+   * @returns {object}  - Plain JSON object
+   **/
+  toObject() {
+    return this.toJSON();
+  }
+
+  /**
+   * Command Type name for this class
+   * @returns {string} - Literal {{aggregate.className}}.{{className}}
+   **/
+  get commandType() {
+    return '{{className}}';
+  }
+{{#each properties}}
+
+  /**
+   * {{#if description}}{{description}}{{else}}Definition for property: {{@key}}{{/if}}
+   * @returns {{{type}}} - {{@key}} value.
+   **/
+  get {{@key}}() {
+    return this._{{@key}};
+  }
+
+  /**
+   * Set value for {{@key}}
+   * @param {{{type}}}    value   - New value for {{@key}}
+   **/
+  set {{@key}}(value) {
+    this._{{@key}} = _{{@key}}Validate(value);
+  }
+{{/each}}
+
+  /**
+   * Convert the instance to a simple object for transport.
+   * @returns {object}          - Plain javascript object for serialization.
+   **/
+  toJSON() {
+    const result = {};
+    {{#each properties}}
+    result.{{@key}} = this._{{@key}};
+    {{/each}}
+    return result;
+  }
 }
 
 module.exports = {{className}};

@@ -1,0 +1,37 @@
+{
+  "name": "gulp-eventsauce",
+  "version": "0.0.1",
+  "description": "Gulp task that performs eventsauce code generation for task domains.",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eventsauce/gulp-eventsauce.git"
+  },
+  "keywords": [
+    "eventsauce",
+    "cqrs",
+    "code",
+    "generation",
+    "handlebars",
+    "gulp",
+    "task"
+  ],
+  "author": "Steve Gray",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/eventsauce/gulp-eventsauce/issues"
+  },
+  "homepage": "https://github.com/eventsauce/gulp-eventsauce#readme",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "defaults": "^1.0.3",
+    "fs": "0.0.2",
+    "gulp-util": "^3.0.7",
+    "handlebars": "^4.0.5",
+    "through2": "^2.0.0",
+    "yamljs": "^0.2.4"
+  }
+}

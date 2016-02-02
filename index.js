@@ -34,6 +34,7 @@ const defaultOptions = {
       folder: 'commands',
       suffix: 'Command',
       prefixAggregateName: false,
+      generateModule: true,
     },
     event: {
       file: formatEventFileName,
@@ -42,6 +43,7 @@ const defaultOptions = {
       folder: 'events',
       suffix: 'Event',
       prefixAggregateName: false,
+      generateModule: true,
     },
     fault: {
       file: formatFaultFileName,
@@ -50,13 +52,18 @@ const defaultOptions = {
       folder: 'faults',
       suffix: 'Fault',
       prefixAggregateName: false,
+      generateModule: true,
     },
+    subModule: {
+      name: 'index.js',
+    }
   },
   templates: {
     aggregate: path.join(__dirname, 'templates', 'es6-server', 'aggregate.handlebars'),
     command: path.join(__dirname, 'templates', 'es6-common', 'command.handlebars'),
     event: path.join(__dirname, 'templates', 'es6-common', 'event.handlebars'),
     fault: path.join(__dirname, 'templates', 'es6-common', 'fault.handlebars'),
+    subModule: path.join(__dirname, 'templates', 'es6-common', 'submodule.handlebars'),
   }
 };
 
@@ -325,7 +332,10 @@ function generator(options) {
       const fileContent = file.contents.toString(encoding);
       debug('    Parsing file text as YAML');
       const model = yamljs.parse(fileContent);
-      
+
+      const flags = {};
+      const collections = {};
+
       for (const aggregateName in model.aggregates) {
         // Generate some commmon aggregate things
         debug('        Processing aggregate: %s', aggregateName);
@@ -357,10 +367,20 @@ function generator(options) {
             subDef.fileName = namingOptions.file(aggregateName, subName, namingOptions);
             debug('               File Name:  %s', subDef.fileName);
             subDef.aggregate = aggDef;
-
+            flags[typeName] = namingOptions.folder;
+            const subPath = path.join(namingOptions.folder, subDef.fileName);
+            debug('               Pathed Name:  %s', subPath);
+            if (!collections[typeName]) {
+              collections[typeName] = [];
+              collections[typeName].items = [];
+            }
+            collections[typeName].items.push({
+              className: subDef.className,
+              fileName: subDef.fileName,
+              fullPath: subPath,
+            });
             // Render our template to the appropriate path
             debug('               Rendering template...');
-            const subPath = path.join(namingOptions.folder, subDef.fileName);
             const subOutput = template(subDef);
             if (self == null) {
               throw new Error('null');
@@ -380,10 +400,21 @@ function generator(options) {
           processSubObject(this, 'event', templateSet.event, aggDef.events, configuration.naming.event);
         }
         if (aggDef.faults) {
-          processSubObject(this, 'faults', templateSet.fault, aggDef.faults, configuration.naming.fault);
+          processSubObject(this, 'fault', templateSet.fault, aggDef.faults, configuration.naming.fault);
         }
       }
-     
+
+      // Generate global objects
+      for (const key in flags) {
+        debug('Rendering global flag file for %s', key);
+        const folderName = flags[key];
+        const items = collections[key];
+        const rendered = templateSet.subModule(items);
+        this.push(new gutil.File({
+          path: path.join(folderName, configuration.naming.subModule.name),
+          contents: new Buffer(rendered),
+        }));
+      }
     } catch (err) {
       debug('    Unhandled exception occured in plugin. Raising context error.');
       debug(err);

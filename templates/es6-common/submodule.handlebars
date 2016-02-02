@@ -1,0 +1,11 @@
+'use strict';
+
+{{#each items}}
+const {{className}} = require('./{{fileName}}');
+{{/each}}
+
+module.exports = {
+{{#each items}}
+  {{className}},
+{{/each}}
+};

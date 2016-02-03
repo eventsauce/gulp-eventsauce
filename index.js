@@ -8,7 +8,7 @@
 
 // NPM External dependencies.
 const debug = require('debug')('gulp-eventsauce:plugin');
-const defaults = require('defaults');
+const defaults = require('defaults-deep');
 const fs = require('fs');
 const gutil = require('gulp-util');
 const Handlebars = require('handlebars');
@@ -78,6 +78,15 @@ const defaultOptions = {
  */
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+/**
+ * Drop-case the first letter of a string
+ * @param   {string}      input       - String to process
+ * @returns {string}                  - Original string with lowercased first letter.
+ */
+function lowercaseFirstLetter(string) {
+    return string.charAt(0).toLowerCase() + string.slice(1);
 }
 
 /**
@@ -308,6 +317,20 @@ function generator(options) {
   // Build our handlebars instance and load the required templates.
   debug('Constructing handlebars instance');
   const handleBars = Handlebars.create();
+  handleBars.registerHelper('toLower', function process(options) {
+    return options.fn(this).toLowerCase();
+  });
+  handleBars.registerHelper('toLowerFirst', function process(options) {
+    return lowercaseFirstLetter(options.fn(this));
+  });
+  handleBars.registerHelper('toUpper', function process(options) {
+    return options.fn(this).toUpperCase();
+  });
+  handleBars.registerHelper('toUpperFirst', function process(options) {
+    return capitalizeFirstLetter(options.fn(this));
+  });
+
+
   var templateSet = {};
   for (let key in configuration.templates) {
      templateSet[key] = loadTemplate(configuration.templates[key], configuration.templateEncoding, handleBars); 
@@ -352,13 +375,6 @@ function generator(options) {
         aggDef.model = model;
         // Render our template to the appropriate path
         const aggPath = path.join(aggNaming.folder, aggDef.fileName);
-        debug('            Rendering template...');
-        const aggOutput = templateSet.aggregate(aggDef);
-        this.push(new gutil.File({
-          path: aggPath,
-          contents: new Buffer(aggOutput),
-        }));
-
         /**
          * Process a sub-object collection from this aggregate.
          */
@@ -407,6 +423,14 @@ function generator(options) {
         if (aggDef.faults) {
           processSubObject(this, 'fault', templateSet.fault, aggDef.faults, configuration.naming.fault);
         }
+
+        debug('            Rendering template...');
+        const aggOutput = templateSet.aggregate(aggDef);
+        this.push(new gutil.File({
+          path: aggPath,
+          contents: new Buffer(aggOutput),
+        }));
+
       }
 
       // Generate global objects
@@ -432,7 +456,10 @@ function generator(options) {
       }
       const rendered = templateSet.rootModule(data);
       this.push(new gutil.File({
-        path: path.join(configuration.naming.rootModule.name),
+        path: configuration.naming.rootModule.folder ?
+          path.join(configuration.naming.rootModule.folder, configuration.naming.rootModule.name)
+          :
+          path.join(configuration.naming.rootModule.name),
         contents: new Buffer(rendered),
       }));
       

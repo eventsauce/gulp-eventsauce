@@ -1,7 +1,75 @@
 'use strict';
 
-/**
- * TODO: Implement your aggregate type.
- **/
+{{#if commands}}// Commands{{/if}}
+{{#each commands}}
+const {{className}} = require('../commands').{{className}};
+{{/each}}
+{{#if commands}}
 
-module.exports = {};
+{{/if}}
+// Director
+const director = require('../directors').get{{className}}Director();
+
+/**
+ * {{#if description}}{{description}}{{else}}Swagger-Tools Controller for {{className}}{{/if}}
+ * @class {{className}}Controller
+ **/
+class {{className}}Controller {
+{{#each commands}}
+
+  /**
+   * Handle the {{className}} event when it occurs.
+   * @description {{description}}
+   * @param {object}    req     - Request object
+   * @param {object}    res     - Response object
+   **/
+  handle{{#toUpperFirst}}{{className}}{{/toUpperFirst}}(req, res) {
+    // Sanity check the state
+    if (!req) {
+      throw new Error('Cannot process {{className}} - the server req was null');
+    } else if (!res) {
+      throw new Error('Cannot process {{className}} - the server res was null');
+    } else if (!req.swagger) {
+      throw new Error('Cannot process {{className}} - req.swagger was null');
+    } else if (!req.swagger.params) {
+      throw new Error('Cannot process {{className}} - req.swagger.params was null')
+    } else if (!req.swagger.params.key) {
+      throw new Error('Cannot process {{className}} - req.swagger.params.key was null')
+    } else if (!req.swagger.params.command) {
+      throw new Error('Cannot process {{className}} - req.swagger.params.command was null')
+    }
+
+    try {
+      // Get the key and parse the command
+      const key = req.swagger.params.key;
+      const command = new {{className}}(req.swagger.params.command);
+
+      // Run the request
+      const result = director.{{#toLowerFirst}}{{className}}{{/toLowerFirst}}(key, command);
+
+      // Empty result
+      if (!result) {
+        // Assume we are ok (no-op command)
+        res.json([], 200);
+      } else if (result.then) {
+        // Promise handling
+        result.then((outcome) => {
+          res.json(outcome, 200);
+        });
+      } else {
+        // Raw result
+        res.json(result, 200);
+      }
+    } catch (err) {
+      res.json(err, 500);
+    }
+  }
+{{/each}}
+}
+
+// Initialize  the singleton instance.
+const singleton = new {{className}}Controller();
+singleton.class = {{className}}Controller;        // Export for unit testing.
+
+// Export the annotated object.
+module.exports = singleton;

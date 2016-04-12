@@ -1,6 +1,6 @@
 {
   "name": "gulp-eventsauce",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Gulp task that performs eventsauce code generation for task domains.",
   "main": "index.js",
   "scripts": {
@@ -27,7 +27,7 @@
   "homepage": "https://github.com/eventsauce/gulp-eventsauce#readme",
   "dependencies": {
     "debug": "^2.2.0",
-    "defaults": "^1.0.3",
+    "defaults-deep": "^0.2.3",
     "fs": "0.0.2",
     "gulp-util": "^3.0.7",
     "handlebars": "^4.0.5",
